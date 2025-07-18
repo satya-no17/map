@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Map Coordinate Selector</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+
+    .navbar {
+      background-color: #343a40;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #map {
+      height: 400px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    #coordinates {
+      background: white;
+      margin: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      font-family: monospace;
+    }
+
+    .footer {
+      background-color: #343a40;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      position: relative;
+      bottom: 0;
+      width: 100%;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="navbar">📍 Map Draw Tool</div>
+
+<div id="map"></div>
+
+<div id="coordinates">Draw a Circle or Rectangle to see coordinates here...</div>
+
+<div class="footer">© 2025 | Built with ❤️</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script>
+  var map = L.map('map').setView([24.5, 83.5], 7);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18
+  }).addTo(map);
+
+  var drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  var drawControl = new L.Control.Draw({
+    draw: {
+      polyline: false,
+      polygon: false,
+      marker: false,
+      circlemarker: false,
+      circle: true,
+      rectangle: true
+    },
+    edit: {
+      featureGroup: drawnItems
+    }
+  });
+  map.addControl(drawControl);
+
+  map.on(L.Draw.Event.CREATED, function (e) {
+    drawnItems.clearLayers();
+    var layer = e.layer;
+    drawnItems.addLayer(layer);
+
+    let coordBox = document.getElementById('coordinates');
+    if (layer instanceof L.Circle) {
+      let center = layer.getLatLng();
+      let radius = layer.getRadius();
+      coordBox.innerHTML = `
+        <b>Shape:</b> Circle<br>
+        <b>Center:</b> [${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}]<br>
+        <b>Radius (meters):</b> ${radius.toFixed(2)}
+      `;
+    } else if (layer instanceof L.Rectangle) {
+      let bounds = layer.getBounds();
+      coordBox.innerHTML = `
+        <b>Shape:</b> Rectangle<br>
+        <b>SouthWest:</b> [${bounds.getSouthWest().lat.toFixed(5)}, ${bounds.getSouthWest().lng.toFixed(5)}]<br>
+        <b>NorthEast:</b> [${bounds.getNorthEast().lat.toFixed(5)}, ${bounds.getNorthEast().lng.toFixed(5)}]
+      `;
+    }
+  });
+</script>
+
+</body>
+</html>
