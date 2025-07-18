@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Futuristic Map Dashboard with Coordinates</title>
+  <title>Futuristic Geo Dashboard 🌐</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Fonts -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk&display=swap" rel="stylesheet">
-  <!-- Leaflet CSS -->
+
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; }
-    body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: white; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; transition: all 0.3s ease; }
+    body.light { background: linear-gradient(135deg, #f5f7fa, #c3cfe2); color: #111; }
+    body.dark { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); color: #fff; }
 
     .navbar {
       display: flex; justify-content: space-between; align-items: center;
@@ -21,42 +26,52 @@
       background: rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255,255,255,0.2);
     }
 
-    .navbar h1 { font-size: 28px; }
-    .nav-links { display: flex; gap: 20px; }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links button, .nav-links a {
+      background: rgba(255,255,255,0.2); border: none; padding: 8px 12px;
+      color: white; border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; gap: 5px; text-decoration: none;
+    }
+    .nav-links button:hover, .nav-links a:hover { background: rgba(255,255,255,0.3); }
 
     .main {
       display: grid; grid-template-columns: 1fr 2fr; gap: 20px; padding: 20px;
+      animation: fadeIn 1s ease-in;
     }
 
     .map, .important {
       background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      backdrop-filter: blur(10px); transition: transform 0.3s;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3); backdrop-filter: blur(10px);
     }
-    .map:hover, .important:hover { transform: scale(1.02); }
 
     #map { height: 400px; border-radius: 12px; margin-bottom: 15px; }
 
-    .coordinates {
-      background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px;
-      font-family: monospace; font-size: 14px;
+    .coordinates { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; font-family: monospace; font-size: 14px; }
+
+    .description { margin: 20px; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; cursor: pointer; }
+    .description-content { display: none; margin-top: 10px; }
+
+    .footer { text-align: center; padding: 15px; background: rgba(255,255,255,0.1); margin-top: 20px; font-size: 14px; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .footer {
-      text-align: center; padding: 15px;
-      background: rgba(255,255,255,0.1); margin-top: 20px;
-      font-size: 14px;
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 
-<body>
+<body class="dark">
 
 <div class="navbar">
   <h1>🛰️ Geo Dashboard</h1>
   <div class="nav-links">
-    <a href="#" style="color:white;">Essentials</a>
-    <a href="#" style="color:white;">Profile</a>
+    <button id="modeToggle"><i data-feather="moon"></i></button>
+    <a href="#"><i data-feather="info"></i> About</a>
+    <a href="#"><i data-feather="user"></i> Login</a>
   </div>
 </div>
 
@@ -64,66 +79,79 @@
   <div class="map">
     <h2>🗺️ Map Section</h2>
     <div id="map"></div>
-    <div class="coordinates" id="coordinates">Draw something to get coordinates...</div>
+    <div class="coordinates" id="coordinates">Draw to get coordinates...</div>
   </div>
 
   <div class="important">
-    <h2>✨ Important Components</h2>
-    <p>You can use this space for filters, file uploads, data display etc.</p>
+    <h2>✨ Important Tools</h2>
+    <p>Add filters, forms, downloads here baby 💫</p>
   </div>
 </div>
 
-<div class="footer">© 2025 | Built by Satya | GitHub | LinkedIn</div>
+<div class="description" onclick="toggleDescription()">
+  <b>ℹ️ How to use this dashboard (Click to Expand)</b>
+  <div class="description-content" id="descContent">
+    <p>✅ Draw circle or rectangle to get coordinates.</p>
+    <p>✅ Switch between map styles using layer options.</p>
+    <p>✅ Use dark/light mode toggle on top-right.</p>
+  </div>
+</div>
 
-<!-- Leaflet Scripts -->
+<div class="footer">© 2025 | Built with ❤️ by You | GitHub | LinkedIn</div>
+
+<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
+<!-- Feather Icons -->
+<script> feather.replace(); </script>
+
 <script>
-  var map = L.map('map').setView([24.5, 83.5], 7);
+const body = document.body;
+document.getElementById('modeToggle').onclick = () => {
+  body.classList.toggle('dark');
+  body.classList.toggle('light');
+};
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+function toggleDescription() {
+  const content = document.getElementById('descContent');
+  content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+}
 
-  var drawnItems = new L.FeatureGroup();
-  map.addLayer(drawnItems);
+var map = L.map('map').setView([24.5, 83.5], 7);
 
-  var drawControl = new L.Control.Draw({
-    draw: {
-      polyline: false,
-      polygon: false,
-      marker: false,
-      circlemarker: false,
-      circle: true,
-      rectangle: true
-    },
-    edit: { featureGroup: drawnItems }
-  });
-  map.addControl(drawControl);
+// Multi Layers
+const baseLayers = {
+  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map),
+  "Satellite": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'),
+  "Dark": L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png')
+};
 
-  map.on(L.Draw.Event.CREATED, function (e) {
-    drawnItems.clearLayers();
-    var layer = e.layer;
-    drawnItems.addLayer(layer);
+L.control.layers(baseLayers).addTo(map);
 
-    let coordBox = document.getElementById('coordinates');
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
 
-    if (layer instanceof L.Circle) {
-      let center = layer.getLatLng();
-      let radius = layer.getRadius();
-      coordBox.innerHTML = `
-        <b>Shape:</b> Circle<br>
-        <b>Center:</b> [${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}]<br>
-        <b>Radius (meters):</b> ${radius.toFixed(2)}
-      `;
-    } else if (layer instanceof L.Rectangle) {
-      let bounds = layer.getBounds();
-      coordBox.innerHTML = `
-        <b>Shape:</b> Rectangle<br>
-        <b>SouthWest:</b> [${bounds.getSouthWest().lat.toFixed(5)}, ${bounds.getSouthWest().lng.toFixed(5)}]<br>
-        <b>NorthEast:</b> [${bounds.getNorthEast().lat.toFixed(5)}, ${bounds.getNorthEast().lng.toFixed(5)}]
-      `;
-    }
-  });
+var drawControl = new L.Control.Draw({
+  draw: { polyline: false, polygon: false, marker: false, circlemarker: false, circle: true, rectangle: true },
+  edit: { featureGroup: drawnItems }
+});
+map.addControl(drawControl);
+
+map.on(L.Draw.Event.CREATED, function (e) {
+  drawnItems.clearLayers();
+  var layer = e.layer;
+  drawnItems.addLayer(layer);
+  let coordBox = document.getElementById('coordinates');
+
+  if (layer instanceof L.Circle) {
+    let c = layer.getLatLng(), r = layer.getRadius();
+    coordBox.innerHTML = `<b>Circle:</b><br>Center: [${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}]<br>Radius: ${r.toFixed(2)}m`;
+  } else if (layer instanceof L.Rectangle) {
+    let b = layer.getBounds();
+    coordBox.innerHTML = `<b>Rectangle:</b><br>SW: [${b.getSouthWest().lat.toFixed(5)}, ${b.getSouthWest().lng.toFixed(5)}]<br>NE: [${b.getNorthEast().lat.toFixed(5)}, ${b.getNorthEast().lng.toFixed(5)}]`;
+  }
+});
 </script>
 
 </body>
